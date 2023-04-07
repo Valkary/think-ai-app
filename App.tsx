@@ -3,12 +3,24 @@ import { NavigationContainer } from "@react-navigation/native";
 import {
   NativeBaseProvider,
   extendTheme,
-  Container,
 } from "native-base";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import UserAchievments from "./components/pages/UserAchievments";
 import { Provider } from "react-redux";
-import { authStore } from "./stores/auth";
+
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
+import RegisterUser from "./components/pages/RegisterUser";
+
+// Define app state
+const appState = configureStore({
+  reducer: {
+    auth: authReducer
+  }
+});
+
+export type AppDispatch = typeof appState.dispatch;
+export type RootState = ReturnType<typeof appState.getState>
 
 // Define the config
 const config = {
@@ -26,14 +38,15 @@ declare module "native-base" {
 const Tab = createBottomTabNavigator();
 
 export default function App() {
-  console.log(authStore.getState());
+
 
   return (
-    <Provider store={authStore}>
+    <Provider store={appState}>
       <NavigationContainer>
         <NativeBaseProvider>
           <Tab.Navigator>
             <Tab.Screen name="Medallas" component={UserAchievments} />
+            <Tab.Screen name="Registro" component={RegisterUser} />
           </Tab.Navigator>
         </NativeBaseProvider>
       </NavigationContainer>
