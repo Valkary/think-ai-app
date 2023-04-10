@@ -6,21 +6,9 @@ import {
 } from "native-base";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import UserAchievments from "./components/pages/UserAchievments";
-import { Provider } from "react-redux";
-
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./slices/authSlice";
+import { Provider, useSelector } from "react-redux";
 import RegisterUser from "./components/pages/RegisterUser";
-
-// Define app state
-const appState = configureStore({
-  reducer: {
-    auth: authReducer
-  }
-});
-
-export type AppDispatch = typeof appState.dispatch;
-export type RootState = ReturnType<typeof appState.getState>
+import { RootState, rootState } from "./redux/stores/rootStore";
 
 // Define the config
 const config = {
@@ -38,20 +26,29 @@ declare module "native-base" {
 const Tab = createBottomTabNavigator();
 
 export default function App() {
-
-
   return (
-    <Provider store={appState}>
-      <NavigationContainer>
-        <NativeBaseProvider>
-          <Tab.Navigator>
-            <Tab.Screen name="Medallas" component={UserAchievments} />
-            <Tab.Screen name="Registro" component={RegisterUser} />
-          </Tab.Navigator>
-        </NativeBaseProvider>
-      </NavigationContainer>
+    <Provider store={rootState}>
+      <NativeBaseProvider>
+        <Router />
+      </NativeBaseProvider>
     </Provider>
   );
+}
+
+function Router() {
+  const authState = useSelector((state: RootState) => state.auth);
+
+  return (
+    <NavigationContainer>
+      <Tab.Navigator>
+        {
+          authState.userToken ?
+            <Tab.Screen name="Medallas" component={UserAchievments} /> :
+            <Tab.Screen name="Registro" component={RegisterUser} />
+        }
+      </Tab.Navigator>
+    </NavigationContainer>
+  )
 }
 
 // TODO: Maybe implement dark mode lol
