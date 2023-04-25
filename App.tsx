@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import {
   NativeBaseProvider,
@@ -9,6 +9,7 @@ import UserAchievments from "./components/pages/UserAchievments";
 import { Provider, useSelector } from "react-redux";
 import RegisterUser from "./components/pages/RegisterUser";
 import { RootState, rootState } from "./redux/stores/rootStore";
+import Login from "./components/pages/Login";
 
 // Define the config
 const config = {
@@ -38,13 +39,20 @@ export default function App() {
 function Router() {
   const authState = useSelector((state: RootState) => state.auth);
 
+  useEffect(() => {
+    console.log(authState);
+  }, [authState])
+
   return (
     <NavigationContainer>
       <Tab.Navigator>
         {
           authState.success ?
             <Tab.Screen name="Medallas" component={UserAchievments} /> :
-            <Tab.Screen name="Registro" component={RegisterUser} />
+            <>
+              <Tab.Screen name="Registro" component={RegisterUser} />
+              <Tab.Screen name="Inicio de sesion" component={Login} />
+            </>
         }
       </Tab.Navigator>
     </NavigationContainer>

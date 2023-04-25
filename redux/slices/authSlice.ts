@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../../firebase";
 
 export type UserRegistrationCredentials = {
@@ -33,14 +33,15 @@ export const registerUser = createAsyncThunk(
 
     try {
       await createUserWithEmailAndPassword(auth, email, password).catch(err => {
-        rejectWithValue(err);
+        return rejectWithValue(err);
       });
 
       if (!auth.currentUser) {
-        throw new Error("idk");
+        return rejectWithValue(0);
       }
+
       await updateProfile(auth.currentUser, { displayName }).catch(err => {
-        rejectWithValue(err);
+        return rejectWithValue(err);
       });
 
       {
@@ -56,6 +57,28 @@ export const registerUser = createAsyncThunk(
     }
   }
 );
+
+export const loginUser = createAsyncThunk(
+  'auth/loginUser',
+  async ({ email, password }: { email: string, password: string }, { rejectWithValue }) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password).catch(err => {
+        return rejectWithValue(err);
+      })
+
+      if (!auth.currentUser) {
+        return rejectWithValue(0);
+      }
+
+      {
+        const { uid, email, displayName } = auth.currentUser;
+        return { uid, email, displayName };
+      }
+    } catch (err) {
+      return rejectWithValue(err)
+    }
+  }
+)
 
 const authSlice = createSlice({
   name: 'auth',
@@ -84,6 +107,33 @@ const authSlice = createSlice({
         success: false,
         loading: false,
         error: action.payload
+      }
+    });
+
+    builder.addCase(loginUser.rejected, (state, action) => {
+      return {
+        ...state,
+        success: false,
+        loading: false,
+        error: action.payload
+      }
+    });
+
+    builder.addCase(loginUser.pending, (state, _) => {
+      return {
+        ...state,
+        loading: true
+      }
+    });
+
+    // @ts-ignore
+    builder.addCase(loginUser.fulfilled, (state, action) => {
+      return {
+        ...state,
+        loading: false,
+        error: null,
+        success: true,
+        userInfo: action.payload
       }
     });
   }
