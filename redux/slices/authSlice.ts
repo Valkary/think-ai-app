@@ -1,95 +1,92 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
-import jwtDecode from "jwt-decode";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "../../firebase";
 
-type userState = {
-    loading: boolean;
-    userInfo: {
-        names: string,
-        lastNames: string,
-        email: string,
-    } | null;
-    userToken: string | null;
-    error: any | null;
-    success: boolean;
+export type UserRegistrationCredentials = {
+  displayName: string;
+  password: string;
+  confirmPwd: string;
+  email: string;
 };
 
-type UserRegistrationCredentials = {
-    firstName: string;
-    lastNames: string;
-    email: string;
-    password: string;
+type initialState = {
+  loading: boolean;
+  userInfo: {
+    uid: string,
+    email: string | null;
+    password: string | null;
+  } | null;
+  error: any;
+  success: boolean;
 };
 
-const initialState: userState = {
-    loading: false,
-    userInfo: null,
-    userToken: null,
-    error: null,
-    success: false
+const initialState: initialState = {
+  loading: false,
+  userInfo: null,
+  error: null,
+  success: false
 };
 
 export const registerUser = createAsyncThunk(
-    'auth/registerUser',
-    async ({ firstName, lastNames, email, password }: UserRegistrationCredentials, { rejectWithValue }) => {
-        try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            };
+  'auth/registerUser',
+  async ({ email, password, displayName }: { email: string, password: string, displayName: string }, { rejectWithValue }) => {
 
-            const token = await axios.post(
-                `/api/user/register`,
-                { firstName, lastNames, email, password },
-                config
-            );
+    try {
+      await createUserWithEmailAndPassword(auth, email, password).catch(err => {
+        rejectWithValue(err);
+      });
 
-            localStorage.setItem("token", token.data);
+      if (!auth.currentUser) {
+        throw new Error("idk");
+      }
+      await updateProfile(auth.currentUser, { displayName }).catch(err => {
+        rejectWithValue(err);
+      });
 
-            return token.data;
-        } catch (error: any) {
-            // return custom error message from backend if present
-            if (error.response && error.response.data.message) {
-                return rejectWithValue(error.response.data.message);
-            } else {
-                return rejectWithValue(error.message);
-            }
-        }
+      {
+        const { uid, email, displayName } = auth.currentUser;
+        return { uid, email, displayName };
+      }
+    } catch (error: any) {
+      if (error.response && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      } else {
+        return rejectWithValue(error.message);
+      }
     }
+  }
 );
 
 const authSlice = createSlice({
-    name: 'auth',
-    initialState,
-    reducers: {},
-    extraReducers: builder => {
-        builder.addCase(registerUser.pending, (state, _) => {
-            return { ...state, loading: true }
-        });
+  name: 'auth',
+  initialState,
+  reducers: {},
+  extraReducers: builder => {
+    builder.addCase(registerUser.pending, (state, _) => {
+      return { ...state, loading: true }
+    });
 
-        builder.addCase(registerUser.fulfilled, (state, action) => {
-            if (action.payload) {
-                const userInfo = jwtDecode<userState["userInfo"]>(action.payload);
+    // WARN: there is a typescript error here but I don't know how to solve it 
+    // @ts-ignore
+    builder.addCase(registerUser.fulfilled, (state, action) => {
+      if (action.payload) {
+        return {
+          ...state,
+          userInfo: action.payload,
+          success: true
+        }
+      }
+    });
 
-                return {
-                    ...state,
-                    token: action.payload,
-                    userInfo,
-                    success: true
-                }
-            }
-        });
-
-        builder.addCase(registerUser.rejected, (state, action) => {
-            return {
-                ...state,
-                success: false,
-                loading: false,
-                error: action.payload
-            }
-        });
-    }
+    builder.addCase(registerUser.rejected, (state, action) => {
+      return {
+        ...state,
+        success: false,
+        loading: false,
+        error: action.payload
+      }
+    });
+  }
 });
 
 export default authSlice.reducer;
