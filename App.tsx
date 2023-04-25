@@ -41,7 +41,7 @@ function Router() {
 
   useEffect(() => {
     console.log(authState);
-  }, [authState])
+  }, [authState]);
 
   return (
     <NavigationContainer>

@@ -37,7 +37,7 @@ export const registerUser = createAsyncThunk(
       });
 
       if (!auth.currentUser) {
-        return rejectWithValue(0);
+        return rejectWithValue({ error: "auth_error" });
       }
 
       await updateProfile(auth.currentUser, { displayName }).catch(err => {
