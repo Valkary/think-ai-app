@@ -10,6 +10,7 @@ import { Provider, useSelector } from "react-redux";
 import RegisterUser from "./components/pages/RegisterUser";
 import { RootState, rootState } from "./redux/stores/rootStore";
 import Login from "./components/pages/Login";
+import Users from "./components/pages/Users";
 
 // Define the config
 const config = {
@@ -48,7 +49,10 @@ function Router() {
       <Tab.Navigator>
         {
           authState.success ?
-            <Tab.Screen name="Medallas" component={UserAchievments} /> :
+            <>
+              <Tab.Screen name="Medallas" component={UserAchievments} />
+              <Tab.Screen name="Usuarios" component={Users} />
+            </> :
             <>
               <Tab.Screen name="Registro" component={RegisterUser} />
               <Tab.Screen name="Inicio de sesion" component={Login} />

@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../../firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { auth, db } from "../../firebase";
 
 export type UserRegistrationCredentials = {
   displayName: string;
@@ -44,8 +45,17 @@ export const registerUser = createAsyncThunk(
         return rejectWithValue(err);
       });
 
+
       {
         const { uid, email, displayName } = auth.currentUser;
+
+        await addDoc(collection(db, "users"), {
+          user_id: uid,
+          username: displayName,
+          email: email,
+          securityLvl: 3
+        });
+
         return { uid, email, displayName };
       }
     } catch (error: any) {
