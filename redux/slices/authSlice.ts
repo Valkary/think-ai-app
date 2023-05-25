@@ -53,7 +53,9 @@ export const registerUser = createAsyncThunk(
           user_id: uid,
           username: displayName,
           email: email,
-          securityLvl: 3
+          securityLvl: 3,
+          waterFootprint: null,
+          carbonFootprint: null,
         });
 
         return { uid, email, displayName };
